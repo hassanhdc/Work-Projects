@@ -46,7 +46,7 @@ impl App {
             adjustment,
             cover,
         };
-
+        //test
         app.connect_events();
         app.connect_toolbar_events();
 
