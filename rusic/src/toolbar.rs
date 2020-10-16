@@ -1,7 +1,4 @@
-// use gio::prelude::*;
 use gtk::prelude::*;
-const PLAY_STOCK: &str = "media-playback-start";
-#[derive(Clone)]
 pub struct MusicToolbar {
     toolbar: gtk::Toolbar,
     pub open_button: gtk::ToolButton,
@@ -29,7 +26,7 @@ impl MusicToolbar {
         let prev_button = create_toolbutton("media-skip-backward", "Previous");
         toolbar.add(&prev_button);
 
-        let play_button = create_toolbutton(PLAY_STOCK, "Play");
+        let play_button = create_toolbutton("media-playback-start", "Play");
         toolbar.add(&play_button);
 
         let stop_button = create_toolbutton("media-playback-stop", "Stop");
