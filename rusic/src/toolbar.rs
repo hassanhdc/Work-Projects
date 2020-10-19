@@ -1,3 +1,4 @@
+use crate::playlist::Playlist;
 use gtk::prelude::*;
 pub struct MusicToolbar {
     toolbar: gtk::Toolbar,
@@ -14,6 +15,12 @@ fn create_toolbutton(icon_name: &str, label: &str) -> gtk::ToolButton {
     let icon = gtk::Image::from_icon_name(Some(icon_name), gtk::IconSize::Button);
     gtk::ToolButton::new(Some(&icon), Some(label))
 }
+
+pub fn set_cover(cover: &gtk::Image, playlist: &Playlist) {
+    cover.set_from_pixbuf(playlist.pixbuf().as_ref());
+    cover.show();
+}
+
 impl MusicToolbar {
     pub fn new() -> Self {
         let toolbar = gtk::Toolbar::new();
@@ -26,7 +33,10 @@ impl MusicToolbar {
         let prev_button = create_toolbutton("media-skip-backward", "Previous");
         toolbar.add(&prev_button);
 
-        let play_button = create_toolbutton("media-playback-start", "Play");
+        let play_icon =
+            gtk::Image::from_icon_name(Some("media-playback-start"), gtk::IconSize::Button);
+        // let play_button = create_toolbutton("media-playback-start", "Play");
+        let play_button = gtk::ToolButton::new(Some(&play_icon), Some("Play"));
         toolbar.add(&play_button);
 
         let stop_button = create_toolbutton("media-playback-stop", "Stop");

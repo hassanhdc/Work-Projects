@@ -52,6 +52,7 @@ dependencies = [
  "gio",
  "glib",
  "gtk",
+ "gtk-sys",
  "id3",
 ]
 
