@@ -1,57 +1,54 @@
 import datetime
 import json
 
-# ticks = 1603793423000
-# ticks2 = 1603793740000
 
-# converted_ticks = datetime.timedelta(microseconds=ticks / 10)
+def ticks_to_time(ticks):
+    """
+    Returns converted .NET Ticks to
+    time in "HH : MM : SS : MS" format
+    """
 
-# converted_ticks2 = datetime.timedelta(microseconds=ticks2 / 10)
-
-# diff = converted_ticks2 - converted_ticks
-# print(diff)
-
-# str_diff = str(diff)
-# print(str_diff[0:11])
-
-
-def convert_to_time(ticks):
     return datetime.timedelta(milliseconds=ticks // 10)
 
 
 with open("gps.json") as f:
     data = json.load(f)
 
-reference_time = convert_to_time(data["GPS"][0]["logTime"])
 
-list_logtime = []
+record_logtime = []
+start_time = ticks_to_time(data["GPS"][0]["logTime"])
 
 for field in data["GPS"]:
 
     ticks = field["logTime"]
-    converted_ticks = convert_to_time(ticks)
-
     lat = field["lat"]
     lon = field["lon"]
 
-    relative_time = converted_ticks - reference_time
+    converted_ticks = ticks_to_time(ticks)
+
+    relative_time = converted_ticks - start_time
+
+    # Chop off extra-milliseconds - measure in 100ms
     current_time = str(relative_time)[0:11]
+
+    # Pad time string with '000 to have uniform length
     if len(current_time) < 11:
         current_time = current_time + ".000"
+
     current_time = current_time.replace(".", ",")
-    list_logtime.append((current_time, lat, lon))
 
-# print(list_logtime)
+    record_logtime.append((current_time, lat, lon))
 
-count = 0
 
 with open("test.srt", "w") as f:
-    for i in range(len(list_logtime) - 2):
-        current_time = list_logtime[i][0]
-        next_time = list_logtime[i + 1][0]
+    count = 0
 
-        lat = list_logtime[i][1]
-        lon = list_logtime[i][2]
+    for i in range(len(record_logtime) - 2):
+        current_time = record_logtime[i][0]
+        next_time = record_logtime[i + 1][0]
+
+        lat = record_logtime[i][1]
+        lon = record_logtime[i][2]
 
         if next_time != current_time:
 
