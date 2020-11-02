@@ -8,7 +8,7 @@ def ticks_to_time(ticks):
     time in "HH : MM : SS : MS" format
     """
 
-    return datetime.timedelta(milliseconds=ticks // 10)
+    return datetime.timedelta(seconds=ticks // 1000)
 
 
 with open("gps.json") as f:
@@ -23,6 +23,7 @@ for field in data["GPS"]:
     ticks = field["logTime"]
     lat = field["lat"]
     lon = field["lon"]
+    speed = field["speed"]
 
     converted_ticks = ticks_to_time(ticks)
 
@@ -37,10 +38,10 @@ for field in data["GPS"]:
 
     current_time = current_time.replace(".", ",")
 
-    record_logtime.append((current_time, lat, lon))
+    record_logtime.append((current_time, lat, lon, speed))
 
 
-with open("test.srt", "w") as f:
+with open("subtitles.srt", "w") as f:
     count = 0
 
     for i in range(len(record_logtime) - 2):
@@ -49,6 +50,7 @@ with open("test.srt", "w") as f:
 
         lat = record_logtime[i][1]
         lon = record_logtime[i][2]
+        speed = record_logtime[i][3]
 
         if next_time != current_time:
 
@@ -65,5 +67,8 @@ with open("test.srt", "w") as f:
                 + "\n"
                 + "long: "
                 + str(lon)
+                + "\n"
+                + "speed: "
+                + str(speed)
                 + "\n\n"
             )
