@@ -64,7 +64,7 @@ with open("subtitles.srt", "w") as f:
                 + "\n"
                 + "lat: "
                 + str(lat)
-                + "\n"
+                + 110 * "\t"
                 + "long: "
                 + str(lon)
                 + "\n"
