@@ -110,13 +110,12 @@ fn example_main() {
 
             //? _____Draw a square at (x,y) position in the buffer frame_____ (Attempt: 2)
             {
-                let square_size = 319;
+                let x_pos = 320;
+                let y_pos = 320;
+                let square_size = 50;
 
-                let draw_x = 320;
-                let draw_y = 320;
-
-                for x in 0..=square_size {
-                    let start_idx = ((draw_y + x) * 2560) + (draw_x * 4);
+                for j in 0..=square_size {
+                    let start_idx = ((y_pos + j) * 2560) + (x_pos * 4);
                     let end_idx = start_idx + (square_size * 4);
 
                     let line = &mut buf_modified[start_idx..=end_idx];
