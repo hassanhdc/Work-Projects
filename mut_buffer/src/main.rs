@@ -36,25 +36,27 @@ fn example_main() {
 
             let ref mut buf_modified = map.to_vec();
 
-            // let mut row_start = 0;
-            // let mut row_end = 2560;
-            // for _ in 0..320 {
-            //     // let row = &mut modified[row_start..row_end];
-            //     // let pix = &mut row[1280];
-            //     // *pix += 255;
-            //     // row_start += 2560;
-            //     // row_end += 2560;
-            //     let row = modified.chunks_exact_mut(4);
-            //     let mut count = 0;
-            //     for arr in row {
-            //         if count == 120 {
-            //             for pix in arr {
-            //                 *pix = 255;
-            //             }
-            //         }
-            //         count += 1;
-            //     }
-            // }
+            //& redundant block of code
+            { // let mut row_start = 0;
+                 // let mut row_end = 2560;
+                 // for _ in 0..320 {
+                 //     // let row = &mut modified[row_start..row_end];
+                 //     // let pix = &mut row[1280];
+                 //     // *pix += 255;
+                 //     // row_start += 2560;
+                 //     // row_end += 2560;
+                 //     let row = modified.chunks_exact_mut(4);
+                 //     let mut count = 0;
+                 //     for arr in row {
+                 //         if count == 120 {
+                 //             for pix in arr {
+                 //                 *pix = 255;
+                 //             }
+                 //         }
+                 //         count += 1;
+                 //     }
+                 // }
+            }
 
             //? _____Draw a square at the center of the frame buffer_____ //
             let lines = FRAME_WIDTH * 4;
@@ -93,15 +95,17 @@ fn example_main() {
 
             map.swap_with_slice(buf_modified);
 
-            // let mut count = 0;
-            // for _ in map.to_vec().iter_mut() {
-            //     if count < 640 * 2 {
-            //         map[count] = 0;
-            //     } else {
-            //         count = 0;
-            //     }
-            //     count += 1;
-            // }
+            //& redundant block of code
+            { // let mut count = 0;
+                 // for _ in map.to_vec().iter_mut() {
+                 //     if count < 640 * 2 {
+                 //         map[count] = 0;
+                 //     } else {
+                 //         count = 0;
+                 //     }
+                 //     count += 1;
+                 // }
+            }
         };
 
         gst::PadProbeReturn::Ok
