@@ -1,11 +1,11 @@
 use gstreamer as gst;
-// use gstreamer_video as gst_video;
 
 use gst::prelude::*;
 
-// use byte_slice_cast::*;
-
 fn example_main() {
+    const FRAME_WIDTH: i32 = 640;
+    const FRAME_HEIGHT: i32 = 640;
+
     gst::init().unwrap();
 
     let src = gst::ElementFactory::make("videotestsrc", Some("src")).unwrap();
@@ -17,13 +17,12 @@ fn example_main() {
     gst::Element::link_many(&[&src, &capsfilter, &sink]).unwrap();
 
     let caps = gst::Caps::builder("video/x-raw")
-        .field("width", &640_i32)
-        .field("height", &320_i32)
+        .field("width", &FRAME_WIDTH)
+        .field("height", &FRAME_HEIGHT)
         .field("framerate", &gst::Fraction::new(15, 1))
         .build();
 
     capsfilter.set_property("caps", &caps).unwrap();
-    // src.set_property("num_buffers", &1).unwrap();
     src.set_property_from_str("pattern", "black");
 
     let pipeline = pipeline.dynamic_cast::<gst::Pipeline>().unwrap();
@@ -37,16 +36,59 @@ fn example_main() {
 
             let ref mut modified = map.to_vec();
 
-            let mut row_start = 0;
-            let mut row_end = 2560;
+            // let mut row_start = 0;
+            // let mut row_end = 2560;
 
-            for _ in 0..320 {
-                let row = &mut modified[row_start..row_end];
-                let pix = &mut row[1280];
-                *pix += 255;
+            // for _ in 0..320 {
+            //     // let row = &mut modified[row_start..row_end];
+            //     // let pix = &mut row[1280];
+            //     // *pix += 255;
+            //     // row_start += 2560;
+            //     // row_end += 2560;
+            //     let row = modified.chunks_exact_mut(4);
+            //     let mut count = 0;
+            //     for arr in row {
+            //         if count == 120 {
+            //             for pix in arr {
+            //                 *pix = 255;
+            //             }
+            //         }
+            //         count += 1;
+            //     }
+            // }
 
-                row_start += 2560;
-                row_end += 2560;
+            //? _____Draw a square at the center of the frame buffer_____ //
+            let lines = FRAME_WIDTH * 4;
+
+            //? draw dimensions for square
+            let draw_x = 320;
+            let draw_y = 320;
+
+            //^ note : square size cannot be greater than any of the draw dimensions
+            let square_size = 50;
+
+            //^ counter for vertical lines in the frame
+            let mut vertical_lines = 0;
+
+            //^ Iterates over each line (note: accounts for stride per line)
+            for line in modified.chunks_exact_mut(lines as usize) {
+                //^ since the square grows from the center i.e. half in each direction and
+                //^ there is an exact '4' chunks per iteration, square_size is divided by 8 (4 * 2)
+
+                if (vertical_lines > draw_y - (square_size / 8))
+                    && (vertical_lines < draw_y + (square_size / 8))
+                {
+                    for pix in &mut line
+                        [((draw_x * 4) - (square_size / 2))..=((draw_x * 4) + (square_size / 2))]
+                        .chunks_exact_mut(4)
+                    {
+                        pix[0] = 255;
+                        pix[1] = 255;
+                        pix[2] = 255;
+                        pix[3] = 255;
+                    }
+                }
+                vertical_lines += 1
             }
 
             map.swap_with_slice(modified);

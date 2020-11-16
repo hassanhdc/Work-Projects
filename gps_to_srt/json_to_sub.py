@@ -8,7 +8,7 @@ def ticks_to_time(ticks):
     time in "HH : MM : SS : MS" format
     """
 
-    return datetime.timedelta(seconds=ticks // 1000)
+    return datetime.datetime(1970, 1, 1) + datetime.timedelta(hours=5, seconds=ticks // 1000)
 
 
 with open("gps.json") as f:
@@ -16,7 +16,8 @@ with open("gps.json") as f:
 
 
 record_logtime = []
-start_time = ticks_to_time(data["GPS"][0]["logTime"])
+start_time = ticks_to_time(
+    data["GPS"][0]["logTime"])
 
 for field in data["GPS"]:
 
@@ -26,19 +27,19 @@ for field in data["GPS"]:
     speed = field["speed"]
 
     converted_ticks = ticks_to_time(ticks)
-
     relative_time = converted_ticks - start_time
 
-    # Chop off extra-milliseconds - measure in 100ms
-    current_time = str(relative_time)[0:11]
+    time = str(converted_ticks)
 
-    # Pad time string with '000 to have uniform length
-    if len(current_time) < 11:
-        current_time = current_time + ".000"
+    # Pad time string with '000' millis
+    current_time = str(relative_time) + ",000"
 
-    current_time = current_time.replace(".", ",")
+    # if len(current_time) < 11:
+    #     current_time = current_time + ".000"
 
-    record_logtime.append((current_time, lat, lon, speed))
+    # current_time = current_time.replace(".", ",")
+
+    record_logtime.append((current_time, lat, lon, speed, time))
 
 
 with open("subtitles.srt", "w") as f:
@@ -51,6 +52,7 @@ with open("subtitles.srt", "w") as f:
         lat = record_logtime[i][1]
         lon = record_logtime[i][2]
         speed = record_logtime[i][3]
+        time = record_logtime[i][4]
 
         if next_time != current_time:
 
@@ -62,13 +64,15 @@ with open("subtitles.srt", "w") as f:
                 + " --> "
                 + next_time
                 + "\n"
+                + time
+                + 24 * " \n"
                 + "lat: "
                 + str(lat)
-                + 110 * "\t"
-                + "long: "
-                + str(lon)
-                + "\n"
+                + 159 * "\t"
                 + "speed: "
                 + str(speed)
+                + "\n"
+                + "lon: "
+                + str(lon)
                 + "\n\n"
             )
