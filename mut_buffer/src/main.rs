@@ -58,43 +58,6 @@ fn example_main() {
                  // }
             }
 
-            //? _____Draw a square at the center of the frame buffer_____ //
-            let lines = FRAME_WIDTH * 4;
-
-            //? draw dimensions for square
-            let draw_x = 320;
-            let draw_y = 320;
-
-            //^ note : square size cannot be greater than any of the draw dimensions
-            let square_size = 50;
-
-            //^ counter for vertical lines in the frame
-            let mut vertical_lines = 0;
-
-            //^ Iterates over each line (note: accounts for stride per line)
-            for line in buf_modified.chunks_exact_mut(lines as usize) {
-                //^ since the square grows from the center i.e. half in each direction and
-                //^ there is an exact '4' chunks per iteration, square_size is divided by 8 (4 * 2)
-
-                if (vertical_lines > draw_y - (square_size / 8))
-                    && (vertical_lines < draw_y + (square_size / 8))
-                {
-                    for pix in &mut line
-                        [((draw_x * 4) - (square_size / 2))..=((draw_x * 4) + (square_size / 2))]
-                        .chunks_exact_mut(4)
-                    {
-                        //^ change each of 'ARGB' values per pixel to white
-                        pix[0] = 255;
-                        pix[1] = 255;
-                        pix[2] = 255;
-                        pix[3] = 255;
-                    }
-                }
-                vertical_lines += 1
-            }
-
-            map.swap_with_slice(buf_modified);
-
             //& redundant block of code
             { // let mut count = 0;
                  // for _ in map.to_vec().iter_mut() {
@@ -105,6 +68,64 @@ fn example_main() {
                  //     }
                  //     count += 1;
                  // }
+            }
+
+            //? _____Draw a square at (x,y) position in the buffer frame_____ (Attempt: 1)
+            {
+                //? draw dimensions for square
+                let lines = FRAME_WIDTH * 4;
+                let draw_x = 320;
+                let draw_y = 320;
+
+                //^ note : square size cannot be greater than any of the draw dimensions
+                let square_size = 50;
+
+                //^ counter for vertical lines in the frame
+                let mut vertical_lines = 0;
+
+                //^ Iterates over each line (note: accounts for stride per line)
+                for line in buf_modified.chunks_exact_mut(lines as usize) {
+                    //^ since the square grows from the center i.e. half in each direction and
+                    //^ there is an exact '4' chunks per iteration, square_size is divided by 8 (4 * 2)
+
+                    if (vertical_lines > draw_y - (square_size / 8))
+                        && (vertical_lines < draw_y + (square_size / 8))
+                    {
+                        for pix in &mut line[((draw_x * 4) - (square_size / 2))
+                            ..=((draw_x * 4) + (square_size / 2))]
+                            .chunks_exact_mut(4)
+                        {
+                            //^ change each of 'ARGB' values per pixel to white
+                            pix[0] = 255;
+                            pix[1] = 255;
+                            pix[2] = 255;
+                            pix[3] = 255;
+                        }
+                    }
+                    vertical_lines += 1
+                }
+
+                map.swap_with_slice(buf_modified);
+            }
+
+            //? _____Draw a square at (x,y) position in the buffer frame_____ (Attempt: 2)
+            {
+                let square_size = 319;
+
+                let draw_x = 320;
+                let draw_y = 320;
+
+                for x in 0..=square_size {
+                    let start_idx = ((draw_y + x) * 2560) + (draw_x * 4);
+                    let end_idx = start_idx + (square_size * 4);
+
+                    let line = &mut buf_modified[start_idx..=end_idx];
+                    for val in line {
+                        *val = 255;
+                    }
+                }
+
+                map.swap_with_slice(buf_modified);
             }
         };
 
