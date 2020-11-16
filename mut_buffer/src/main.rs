@@ -38,7 +38,6 @@ fn example_main() {
 
             // let mut row_start = 0;
             // let mut row_end = 2560;
-
             // for _ in 0..320 {
             //     // let row = &mut modified[row_start..row_end];
             //     // let pix = &mut row[1280];
