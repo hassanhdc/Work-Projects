@@ -2,10 +2,10 @@ use gstreamer as gst;
 
 use gst::prelude::*;
 
-fn example_main() {
-    const FRAME_WIDTH: i32 = 640;
-    const FRAME_HEIGHT: i32 = 640;
+const FRAME_WIDTH: i32 = 640;
+const FRAME_HEIGHT: i32 = 640;
 
+fn example_main() {
     gst::init().unwrap();
 
     let src = gst::ElementFactory::make("videotestsrc", Some("src")).unwrap();
@@ -34,7 +34,7 @@ fn example_main() {
             let buffer = buffer.make_mut();
             let mut map = buffer.map_writable().unwrap();
 
-            let ref mut modified = map.to_vec();
+            let ref mut buf_modified = map.to_vec();
 
             // let mut row_start = 0;
             // let mut row_end = 2560;
@@ -70,7 +70,7 @@ fn example_main() {
             let mut vertical_lines = 0;
 
             //^ Iterates over each line (note: accounts for stride per line)
-            for line in modified.chunks_exact_mut(lines as usize) {
+            for line in buf_modified.chunks_exact_mut(lines as usize) {
                 //^ since the square grows from the center i.e. half in each direction and
                 //^ there is an exact '4' chunks per iteration, square_size is divided by 8 (4 * 2)
 
@@ -81,6 +81,7 @@ fn example_main() {
                         [((draw_x * 4) - (square_size / 2))..=((draw_x * 4) + (square_size / 2))]
                         .chunks_exact_mut(4)
                     {
+                        //^ change each of 'ARGB' values per pixel to white
                         pix[0] = 255;
                         pix[1] = 255;
                         pix[2] = 255;
@@ -90,7 +91,7 @@ fn example_main() {
                 vertical_lines += 1
             }
 
-            map.swap_with_slice(modified);
+            map.swap_with_slice(buf_modified);
 
             // let mut count = 0;
             // for _ in map.to_vec().iter_mut() {
