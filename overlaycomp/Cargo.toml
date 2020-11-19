@@ -1,0 +1,27 @@
+[package]
+name = "overlaycomp"
+version = "0.1.0"
+authors = ["Muhammad Hassan <hassanmuhammad221@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "*"
+derive_more = "*"
+pango = "*"
+cairo-rs = "*"
+cairo-sys-rs = "*"
+pangocairo = "*"
+glib = "*"
+gst = {package = "gstreamer", version = "*"}
+gst_video = {package = "gstreamer-video", version = "*"}
+
+[[bin]]
+
+name = "overlaycomp"
+path = "src/main.rs"
+
+[[bin]]
+name = "pangocairo"
+path = "src/pangocairo.rs"
