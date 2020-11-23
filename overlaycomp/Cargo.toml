@@ -25,3 +25,7 @@ path = "src/main.rs"
 [[bin]]
 name = "pangocairo"
 path = "src/pangocairo.rs"
+
+[[bin]]
+name = "buf"
+path = "src/buf.rs"

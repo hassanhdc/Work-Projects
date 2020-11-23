@@ -79,8 +79,8 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
     let font_desc = pango::FontDescription::from_string("Sans Bold 26");
     layout.set_font_description(Some(&font_desc));
     layout2.set_font_description(Some(&font_desc));
-    layout.set_text("Hello");
-    layout2.set_text("World");
+    layout.set_text("World");
+    layout2.set_text("Hello");
 
     let drawer = Arc::new(Mutex::new(DrawingContext {
         layout: glib::SendUniqueCell::new(layout).unwrap(),
@@ -106,7 +106,7 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
             let sample = args[1].get::<gst::Sample>().unwrap().unwrap();
             let buffer = sample.get_buffer().unwrap();
-            let timestamp = buffer.get_pts();
+            let _timestamp = buffer.get_pts();
 
             let info = drawer.info.as_ref().unwrap();
             let layout = drawer.layout.borrow();
@@ -143,37 +143,32 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
                 let cr = cairo::Context::new(&surface);
                 let cr2 = cairo::Context::new(&surface);
 
-                cr.save();
-                cr.set_operator(cairo::Operator::Clear);
-                cr.paint();
-                cr.restore();
+                // cr.save();
+                // cr.set_operator(cairo::Operator::Clear);
+                // cr.paint();
+                // cr.restore();
 
-                cr2.save();
-                cr2.set_operator(cairo::Operator::Clear);
-                cr2.paint();
-                cr2.restore();
+                // cr2.save();
+                // cr2.set_operator(cairo::Operator::Clear);
+                // cr2.paint();
+                // cr2.restore();
 
                 cr.translate(
                     f64::from(info.width()) / 2.0,
                     f64::from(info.height()) / 2.0,
                 );
                 cr2.translate(
-                    f64::from(info.width()) / 5.0,
-                    f64::from(info.height()) / 5.0,
+                    f64::from(info.width()) / 2.0,
+                    f64::from(info.height()) / 2.5,
                 );
 
-                // let (width, _height) = layout.get_size();
-
                 pangocairo::functions::show_layout(&cr, &**layout);
+                layout.set_text(&_timestamp.to_string());
                 pangocairo::functions::show_layout(&cr2, &**layout2);
-
-                while true {
-                    println!("Hello World");
-                    break;
-                }
 
                 drop(cr);
                 drop(cr2);
+
                 unsafe {
                     assert_eq!(
                         cairo_sys::cairo_surface_get_reference_count(surface.to_raw_none()),
@@ -194,8 +189,17 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
                 gst_video::VideoOverlayFormatFlags::PREMULTIPLIED_ALPHA,
             );
 
+            let rect2 = gst_video::VideoOverlayRectangle::new_raw(
+                &buffer,
+                100,
+                100,
+                frame_width as u32,
+                frame_height as u32,
+                gst_video::VideoOverlayFormatFlags::PREMULTIPLIED_ALPHA,
+            );
+
             Some(
-                gst_video::VideoOverlayComposition::new(Some(&rect))
+                gst_video::VideoOverlayComposition::new(&[rect])
                     .unwrap()
                     .to_value(),
             )

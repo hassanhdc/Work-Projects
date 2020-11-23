@@ -72,23 +72,32 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
     let fontmap = pangocairo::FontMap::new().unwrap();
 
     let context = fontmap.create_context().unwrap();
-    let layout = LayoutWrapper(pango::Layout::new(&context));
+    let layout_time = LayoutWrapper(pango::Layout::new(&context));
+    let layout_message = LayoutWrapper(pango::Layout::new(&context));
 
     let font_desc = pango::FontDescription::from_string("Sans Bold 12");
-    layout.set_font_description(Some(&font_desc));
-    layout.set_text("GStreamer");
+    layout_time.set_font_description(Some(&font_desc));
+    layout_message.set_font_description(Some(&font_desc));
+    layout_message.set_text("Hello World");
 
-    let drawer = Arc::new(Mutex::new(DrawingContext {
-        layout: glib::SendUniqueCell::new(layout).unwrap(),
+    let drawer_time = Arc::new(Mutex::new(DrawingContext {
+        layout: glib::SendUniqueCell::new(layout_time).unwrap(),
+        info: None,
+    }));
+    let drawer_msg = Arc::new(Mutex::new(DrawingContext {
+        layout: glib::SendUniqueCell::new(layout_message).unwrap(),
         info: None,
     }));
 
-    let drawer_clone = drawer.clone();
+    let drawer_clone_time = drawer_time.clone();
+    let drawer_clone_msg = drawer_msg.clone();
 
     overlay
         .connect("draw", false, move |args| {
-            let drawer = &drawer_clone;
-            let drawer = drawer.lock().unwrap();
+            let drawer_time = &drawer_clone_time;
+            let drawer_msg = &drawer_clone_msg;
+            let drawer_time = drawer_time.lock().unwrap();
+            let drawer_msg = drawer_msg.lock().unwrap();
 
             let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
 
@@ -96,21 +105,26 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let timestamp = args[2].get_some::<gst::ClockTime>().unwrap();
             let _duration = args[3].get_some::<gst::ClockTime>().unwrap();
 
-            let info = drawer.info.as_ref().unwrap();
-            let layout = drawer.layout.borrow();
+            let layout_time = drawer_time.layout.borrow();
+            let layout_msg = drawer_msg.layout.borrow();
 
-            cr.set_source_rgb(1.0, 0.5, 0.0);
+            cr.set_source_rgba(1.0, 0.5, 0.0, 0.8);
 
-            pangocairo::functions::update_layout(&cr, &**layout);
-            // let (width, _height) = layout.get_size();
+            pangocairo::functions::update_layout(&cr, &**layout_time);
+            pangocairo::functions::update_layout(&cr, &**layout_msg);
 
-            cr.move_to(400., 400.);
+            cr.move_to(650., 770.);
 
-            pangocairo::functions::show_layout(&cr, &**layout);
+            pangocairo::functions::show_layout(&cr, &**layout_time);
+            pangocairo::functions::show_layout(&cr, &**layout_msg);
 
-            if timestamp > 5 * gst::SECOND {
-                layout.set_text("Hello World");
-            };
+            layout_time.
+
+            let time_str = timestamp.to_string();
+            let time = format!("{:.11}", time_str);
+
+            layout_time.set_text(&time);
+
             None
         })
         .unwrap();
@@ -120,8 +134,9 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
             let caps = args[1].get::<gst::Caps>().unwrap().unwrap();
 
-            let mut drawer = drawer.lock().unwrap();
-            drawer.info = Some(gst_video::VideoInfo::from_caps(&caps).unwrap());
+            let mut drawer_time = drawer_time.lock().unwrap();
+            // let mut drawer_msg = drawer_msg.lock().unwrap();
+            drawer_time.info = Some(gst_video::VideoInfo::from_caps(&caps).unwrap());
 
             None
         })
