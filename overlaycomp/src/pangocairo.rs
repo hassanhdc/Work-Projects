@@ -67,37 +67,27 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
         .build();
     capsfilter.set_property("caps", &caps).unwrap();
 
-    src.set_property_from_str("pattern", "white");
+    src.set_property_from_str("pattern", "smpte");
 
     let fontmap = pangocairo::FontMap::new().unwrap();
 
     let context = fontmap.create_context().unwrap();
-    let layout_time = LayoutWrapper(pango::Layout::new(&context));
-    let layout_message = LayoutWrapper(pango::Layout::new(&context));
+    let layout = LayoutWrapper(pango::Layout::new(&context));
 
     let font_desc = pango::FontDescription::from_string("Sans Bold 12");
-    layout_time.set_font_description(Some(&font_desc));
-    layout_message.set_font_description(Some(&font_desc));
-    layout_message.set_text("Hello World");
+    layout.set_font_description(Some(&font_desc));
 
-    let drawer_time = Arc::new(Mutex::new(DrawingContext {
-        layout: glib::SendUniqueCell::new(layout_time).unwrap(),
-        info: None,
-    }));
-    let drawer_msg = Arc::new(Mutex::new(DrawingContext {
-        layout: glib::SendUniqueCell::new(layout_message).unwrap(),
+    let drawer = Arc::new(Mutex::new(DrawingContext {
+        layout: glib::SendUniqueCell::new(layout).unwrap(),
         info: None,
     }));
 
-    let drawer_clone_time = drawer_time.clone();
-    let drawer_clone_msg = drawer_msg.clone();
+    let drawer_clone = drawer.clone();
 
     overlay
         .connect("draw", false, move |args| {
-            let drawer_time = &drawer_clone_time;
-            let drawer_msg = &drawer_clone_msg;
-            let drawer_time = drawer_time.lock().unwrap();
-            let drawer_msg = drawer_msg.lock().unwrap();
+            let drawer = &drawer_clone;
+            let drawer = drawer.lock().unwrap();
 
             let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
 
@@ -105,25 +95,33 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let timestamp = args[2].get_some::<gst::ClockTime>().unwrap();
             let _duration = args[3].get_some::<gst::ClockTime>().unwrap();
 
-            let layout_time = drawer_time.layout.borrow();
-            let layout_msg = drawer_msg.layout.borrow();
+            let layout = drawer.layout.borrow();
 
-            cr.set_source_rgba(1.0, 0.5, 0.0, 0.8);
-
-            pangocairo::functions::update_layout(&cr, &**layout_time);
-            pangocairo::functions::update_layout(&cr, &**layout_msg);
-
+            let surface_time =
+                cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
+            cr.set_source_surface(&surface_time, 0., 0.);
+            cr.set_source_rgba(1.0, 0.0, 0.0, 1.);
             cr.move_to(650., 770.);
-
-            pangocairo::functions::show_layout(&cr, &**layout_time);
-            pangocairo::functions::show_layout(&cr, &**layout_msg);
-
-            layout_time.
-
             let time_str = timestamp.to_string();
             let time = format!("{:.11}", time_str);
+            layout.set_text(&time);
+            pangocairo::functions::show_layout(&cr, &**layout);
 
-            layout_time.set_text(&time);
+            let surface_msg = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
+            cr.set_source_surface(&surface_msg, 0., 0.);
+            cr.set_source_rgba(1.0, 0.5, 0.0, 1.);
+            cr.move_to(0., 0.);
+            let msg = "What is love";
+            layout.set_text(msg);
+            pangocairo::functions::show_layout(&cr, &**layout);
+
+            // let surface_msg = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
+            cr.set_source_surface(&surface_msg, 0., 0.);
+            cr.set_source_rgba(0.0, 0.5, 0.0, 1.);
+            cr.move_to(670., 0.);
+            let msg = "Baby dont hurt \nme no more";
+            layout.set_text(msg);
+            pangocairo::functions::show_layout(&cr, &**layout);
 
             None
         })
@@ -134,7 +132,7 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
             let caps = args[1].get::<gst::Caps>().unwrap().unwrap();
 
-            let mut drawer_time = drawer_time.lock().unwrap();
+            let mut drawer_time = drawer.lock().unwrap();
             // let mut drawer_msg = drawer_msg.lock().unwrap();
             drawer_time.info = Some(gst_video::VideoInfo::from_caps(&caps).unwrap());
 
