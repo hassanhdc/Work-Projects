@@ -35,7 +35,7 @@ fn example_main() {
     let caps = gst::Caps::builder("video/x-raw")
         .field("width", &FRAME_WIDTH)
         .field("height", &FRAME_HEIGHT)
-        .field("framerate", &gst::Fraction::new(15, 1))
+        .field("framerate", &gst::Fraction::new(30, 1))
         .build();
 
     capsfilter.set_property("caps", &caps).unwrap();
@@ -46,9 +46,12 @@ fn example_main() {
     let pad = src.get_static_pad("src").unwrap();
 
     pad.add_probe(gst::PadProbeType::BUFFER, move |_, probe_info| {
+        let mut overlay_args = vec![(0, 3, false), (4, 6, false), (6, 8, false)];
         if let Some(gst::PadProbeData::Buffer(ref mut buffer)) = probe_info.data {
             let buffer = buffer.make_mut();
-            let time = buffer.get_pts().to_string();
+            let time = buffer.get_pts();
+            // let mut time_str = time.to_string();
+            let mut time_str = format!("{:.11}", time.to_string());
             let mut map = buffer.map_writable().unwrap();
 
             let buf_modified = &mut map.to_vec();
@@ -57,7 +60,7 @@ fn example_main() {
 
             let mut surface = cairo::ImageSurface::create_for_data(
                 clone_buf,
-                cairo::Format::ARgb32,
+                cairo::Format::Rgb30,
                 FRAME_WIDTH,
                 FRAME_HEIGHT,
                 FRAME_WIDTH * 4,
@@ -65,18 +68,32 @@ fn example_main() {
             .unwrap();
 
             let ctx = cairo::Context::new(&surface);
-            ctx.set_source_rgb(0.05, 0.05, 0.05);
-            ctx.rectangle(300., 550., 300., 50.);
-            // ctx.paint();
-            // ctx.fill();
-
             ctx.set_source_rgb(1.0, 1.0, 1.0);
+            ctx.rectangle(350., 550., 250., 50.);
+            ctx.fill();
+
+            ctx.set_source_rgba(0., 0.0, 0., 1.);
             ctx.select_font_face("Purisa", cairo::FontSlant::Normal, cairo::FontWeight::Bold);
 
             ctx.set_font_size(20.);
 
             ctx.move_to(400., 590.);
-            ctx.show_text(&time);
+            for item in overlay_args.iter_mut() {
+                item.2 = true;
+            }
+
+            // if time > 2 * gst::SECOND {
+            //     time_str = "time's up".to_string();
+            // };
+            ctx.show_text(&time_str);
+
+            let mut msg = "HWAT";
+            ctx.save();
+            ctx.move_to(10., 15.);
+            if time > 2 * gst::SECOND {
+                msg = "WHAT";
+            };
+            ctx.show_text(msg);
 
             drop(ctx);
 

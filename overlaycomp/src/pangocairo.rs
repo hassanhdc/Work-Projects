@@ -65,6 +65,7 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
         .field("width", &800i32)
         .field("height", &800i32)
         .build();
+
     capsfilter.set_property("caps", &caps).unwrap();
 
     src.set_property_from_str("pattern", "smpte");
@@ -117,7 +118,7 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
 
             // let surface_msg = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
             cr.set_source_surface(&surface_msg, 0., 0.);
-            cr.set_source_rgba(0.0, 0.5, 0.0, 1.);
+            cr.set_source_rgba(1.0, 1.0, 1.0, 1.);
             cr.move_to(670., 0.);
             let msg = "Baby dont hurt \nme no more";
             layout.set_text(msg);
@@ -133,7 +134,6 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let caps = args[1].get::<gst::Caps>().unwrap().unwrap();
 
             let mut drawer_time = drawer.lock().unwrap();
-            // let mut drawer_msg = drawer_msg.lock().unwrap();
             drawer_time.info = Some(gst_video::VideoInfo::from_caps(&caps).unwrap());
 
             None
