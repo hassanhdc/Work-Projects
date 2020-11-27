@@ -46,20 +46,18 @@ fn example_main() {
     let pad = src.get_static_pad("src").unwrap();
 
     pad.add_probe(gst::PadProbeType::BUFFER, move |_, probe_info| {
-        let mut overlay_args = vec![(0, 3, false), (4, 6, false), (6, 8, false)];
         if let Some(gst::PadProbeData::Buffer(ref mut buffer)) = probe_info.data {
             let buffer = buffer.make_mut();
             let time = buffer.get_pts();
             // let mut time_str = time.to_string();
-            let mut time_str = format!("{:.11}", time.to_string());
+            // let mut time_str = format!("{:.11}", time.to_string());
+            let mut time_str = String::from("");
             let mut map = buffer.map_writable().unwrap();
 
             let buf_modified = &mut map.to_vec();
 
-            let clone_buf = buf_modified.clone();
-
             let mut surface = cairo::ImageSurface::create_for_data(
-                clone_buf,
+                buf_modified.clone(),
                 cairo::Format::Rgb30,
                 FRAME_WIDTH,
                 FRAME_HEIGHT,
@@ -74,18 +72,36 @@ fn example_main() {
 
             ctx.set_source_rgba(0., 0.0, 0., 1.);
             ctx.select_font_face("Purisa", cairo::FontSlant::Normal, cairo::FontWeight::Bold);
-
             ctx.set_font_size(20.);
-
             ctx.move_to(400., 590.);
-            for item in overlay_args.iter_mut() {
-                item.2 = true;
+
+            // TODO : use overlay args to simulate if overlays can be shown with cmd line argument
+            let mut overlay_args = vec![
+                (0, 4, false, "foo"),
+                (4, 6, false, "bar"),
+                (6, 8, false, "buzz"),
+            ];
+
+            for arg in overlay_args.iter_mut() {
+                if arg.2 == false {
+                    if time < arg.1 * gst::SECOND {
+                        println!("{}: {}", time, arg.3);
+                        time_str = arg.3.to_string();
+                        break;
+                    } else {
+                        arg.2 = true;
+                    }
+                } else {
+                    continue;
+                }
             }
 
+            ctx.show_text(&time_str);
+
+            //? EXPERIMENT : test update text with buffer pts
             // if time > 2 * gst::SECOND {
             //     time_str = "time's up".to_string();
             // };
-            ctx.show_text(&time_str);
 
             let mut msg = "HWAT";
             ctx.save();

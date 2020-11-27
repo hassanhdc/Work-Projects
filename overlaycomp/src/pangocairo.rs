@@ -103,12 +103,13 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             cr.set_source_surface(&surface_time, 0., 0.);
             cr.set_source_rgba(1.0, 0.0, 0.0, 1.);
             cr.move_to(650., 770.);
+
             let time_str = timestamp.to_string();
             let time = format!("{:.11}", time_str);
             layout.set_text(&time);
             pangocairo::functions::show_layout(&cr, &**layout);
 
-            let surface_msg = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
+            let surface_msg = cairo::ImageSurface::create(cairo::Format::Rgb30, 800, 800).unwrap();
             cr.set_source_surface(&surface_msg, 0., 0.);
             cr.set_source_rgba(1.0, 0.5, 0.0, 1.);
             cr.move_to(0., 0.);
@@ -116,7 +117,6 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             layout.set_text(msg);
             pangocairo::functions::show_layout(&cr, &**layout);
 
-            // let surface_msg = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
             cr.set_source_surface(&surface_msg, 0., 0.);
             cr.set_source_rgba(1.0, 1.0, 1.0, 1.);
             cr.move_to(670., 0.);
