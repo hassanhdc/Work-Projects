@@ -62,8 +62,9 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
     gst::Element::link_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
 
     let caps = gst::Caps::builder("video/x-raw")
-        .field("width", &800i32)
-        .field("height", &800i32)
+        .field("width", &1920i32)
+        .field("height", &1080i32)
+        .field("framerate", &gst::Fraction::new(30, 1))
         .build();
 
     capsfilter.set_property("caps", &caps).unwrap();
@@ -94,11 +95,11 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
 
             let layout = drawer.layout.borrow();
 
-            let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
+            let surface = cairo::ImageSurface::create(cairo::Format::Rgb30, 20, 20).unwrap();
             ctx.set_source_surface(&surface, 0., 0.);
 
-            ctx.set_source_rgba(1.0, 0.0, 0.0, 1.);
-            ctx.move_to(650., 770.);
+            ctx.set_source_rgba(1.0, 1.0, 0.0, 1.);
+            ctx.move_to(1800., 970.);
 
             let timestamp_str = format!("{:.11}", timestamp.to_string());
             layout.set_text(&timestamp_str);

@@ -1,8 +1,8 @@
 use gst::prelude::*;
 use std::ops;
 
-const FRAME_WIDTH: i32 = 600;
-const FRAME_HEIGHT: i32 = 600;
+const FRAME_WIDTH: i32 = 1920;
+const FRAME_HEIGHT: i32 = 1080;
 
 #[derive(Debug)]
 struct LayoutWrapper(pango::Layout);
@@ -66,26 +66,26 @@ fn example_main() {
             .unwrap();
 
             let ctx = cairo::Context::new(&surface);
-            ctx.set_source_rgb(1.0, 1.0, 1.0);
-            ctx.rectangle(350., 550., 250., 50.);
+            ctx.set_source_rgb(1.0, 1.0, 0.5);
+            ctx.rectangle(1650., 960., 200., 50.);
             ctx.fill();
 
-            ctx.set_source_rgba(0., 0.0, 0., 1.);
+            ctx.set_source_rgb(0., 0.0, 0.);
             ctx.select_font_face("Purisa", cairo::FontSlant::Normal, cairo::FontWeight::Bold);
             ctx.set_font_size(20.);
-            ctx.move_to(400., 590.);
+            ctx.move_to(1730., 990.);
 
             // TODO : use overlay args to simulate if overlays can be shown with cmd line argument
             let mut overlay_args = vec![
-                (0, 4, false, "foo"),
-                (4, 6, false, "bar"),
-                (6, 8, false, "buzz"),
+                (0, 4, false, "FOO"),
+                (4, 6, false, "BAR"),
+                (6, 8, false, "BAZ"),
+                (6, 10, false, "QUX"),
             ];
 
             for arg in overlay_args.iter_mut() {
                 if arg.2 == false {
                     if time < arg.1 * gst::SECOND {
-                        println!("{}: {}", time, arg.3);
                         time_str = arg.3.to_string();
                         break;
                     } else {
