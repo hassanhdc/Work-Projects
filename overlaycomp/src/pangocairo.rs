@@ -71,7 +71,6 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
     src.set_property_from_str("pattern", "smpte");
 
     let fontmap = pangocairo::FontMap::new().unwrap();
-
     let context = fontmap.create_context().unwrap();
     let layout = LayoutWrapper(pango::Layout::new(&context));
 
@@ -90,39 +89,32 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let drawer = &drawer_clone;
             let drawer = drawer.lock().unwrap();
 
-            let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
-
-            let cr = args[1].get::<cairo::Context>().unwrap().unwrap();
             let timestamp = args[2].get_some::<gst::ClockTime>().unwrap();
-            let _duration = args[3].get_some::<gst::ClockTime>().unwrap();
+            let ctx = args[1].get::<cairo::Context>().unwrap().unwrap();
 
             let layout = drawer.layout.borrow();
 
-            let surface_time =
-                cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
-            cr.set_source_surface(&surface_time, 0., 0.);
-            cr.set_source_rgba(1.0, 0.0, 0.0, 1.);
-            cr.move_to(650., 770.);
+            let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, 800, 800).unwrap();
+            ctx.set_source_surface(&surface, 0., 0.);
 
-            let time_str = timestamp.to_string();
-            let time = format!("{:.11}", time_str);
-            layout.set_text(&time);
-            pangocairo::functions::show_layout(&cr, &**layout);
+            ctx.set_source_rgba(1.0, 0.0, 0.0, 1.);
+            ctx.move_to(650., 770.);
 
-            let surface_msg = cairo::ImageSurface::create(cairo::Format::Rgb30, 800, 800).unwrap();
-            cr.set_source_surface(&surface_msg, 0., 0.);
-            cr.set_source_rgba(1.0, 0.5, 0.0, 1.);
-            cr.move_to(0., 0.);
-            let msg = "What is love";
+            let timestamp_str = format!("{:.11}", timestamp.to_string());
+            layout.set_text(&timestamp_str);
+            pangocairo::functions::show_layout(&ctx, &**layout);
+
+            ctx.set_source_rgba(1.0, 0.5, 0.0, 1.);
+            ctx.move_to(0., 0.);
+            let msg = "Foo Bar";
             layout.set_text(msg);
-            pangocairo::functions::show_layout(&cr, &**layout);
+            pangocairo::functions::show_layout(&ctx, &**layout);
 
-            cr.set_source_surface(&surface_msg, 0., 0.);
-            cr.set_source_rgba(1.0, 1.0, 1.0, 1.);
-            cr.move_to(670., 0.);
-            let msg = "Baby dont hurt \nme no more";
+            ctx.set_source_rgba(1.0, 1.0, 1.0, 1.);
+            ctx.move_to(670., 0.);
+            let msg = "Baz Qux";
             layout.set_text(msg);
-            pangocairo::functions::show_layout(&cr, &**layout);
+            pangocairo::functions::show_layout(&ctx, &**layout);
 
             None
         })
