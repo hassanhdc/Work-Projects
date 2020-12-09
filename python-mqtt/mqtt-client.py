@@ -37,6 +37,8 @@ def on_message(client, userdata, msg):
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected to MQTT Broker")
+        time.sleep(1)
+        subscribe_topics(client)
     else:
         exit()
 
@@ -75,12 +77,11 @@ client.on_message = on_message
 client.will_set(topic_presence, lwm, qos=1, retain=False)
 
 client.connect(host, port)
-client.loop_start()
-subscribe_topics(client)
 
+client.loop_start()
 client.publish(topic_presence, presence_online)
-time.sleep(1)
-# client.publish()
-# time.sleep(5)
+
+time.sleep(10)
+
 client.disconnect(reasoncode=0)
 client.loop_stop()
