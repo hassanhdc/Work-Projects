@@ -1,4 +1,5 @@
 import paho.mqtt.client as mqtt_client
+import json
 import time
 
 host = "10.227.141.112"
@@ -17,15 +18,14 @@ client_id = "WKBXXB0054"
 lwm = """{"ClientId":"WKBXXB0054","StationId":4,"Status":0}"""
 presence_online = """{"ClientId":"WKBXXB0054","StationId":4,"Status":1}"""
 presence_offline = """{"ClientId":"WKBXXB0054","StationId":4,"Status":0}"""
-# ? 1st attempt
+# conversation_id = ""
+
+# & 1st attempt
 # incoming_msg = """{"ConversationID":"23439f1c-98f1-4bbd-8e22-e3f86055e6df","MessageType":"Ack","MessageOrigin":null,"From":"WKBXXB0054","CommandInvokerGuid":null,"To":"admin","TimestampOrigin":1607499037857,"TimestampHub":1607499037857,"Body":"{\r\n  \"Code\": 200,\r\n  \"Description\": \"Message Received\",\r\n  \"OriginalMessage\": {\r\n    \"ConversationID\": \"23439f1c-98f1-4bbd-8e22-e3f86055e6df\",\r\n    \"MessageType\": \"Command\",\r\n    \"MessageOrigin\": null,\r\n    \"From\": \"admin\",\r\n    \"CommandInvokerGuid\": \"012bf825-73b5-4eea-afa5-94e41ae157de\",\r\n    \"To\": \"WKBXXB0054\",\r\n    \"TimestampOrigin\": 1607499037775,\r\n    \"TimestampHub\": 1607499037776,\r\n    \"Body\": \"{\\\"CommandType\\\":\\\"InCarStatus\\\",\\\"CommandID\\\":10501,\\\"Params\\\":{\\\"Duration\\\":60}}\",\r\n    \"Data\": null\r\n  }\r\n}","Data":null}"""
 # #                  """{"ConversationID":"23439f1c-98f1-4bbd-8e22-e3f86055e6df","MessageType":"Success","MessageOrigin":null,"From":"WKBXXB0054","CommandInvokerGuid":"012bf825-73b5-4eea-afa5-94e41ae157de","To":"admin","TimestampOrigin":1607499037775,"TimestampHub":1607499037776,"Body":"{\"success\": true,\"Result\": \"{\\\"success\\\":true,\\\"Data\\\":{\\\"status\\\":\\\"StreamingOff\\\",\\\"commandInvoker\\\":\\\"\\\"}}\",\"CommandType\": \"InCarStatus\",\"CommandID\": 10501,\"Description\": \"Operation succeeded.\"}","Data":null}"""
 # #  ]
 
 # ? 2nd attempt
-iot_reply_1 = """{\"ConversationID\":\"13c618d8-c20f-4fc2-a93c-af2fead8ac6a\",\"MessageType\":\"Ack\",\"MessageOrigin\":null,\"From\":\"WKBXXB0054\",\"CommandInvokerGuid\":null,\"To\":\"admin\",\"TimestampOrigin\":1607599458679,\"TimestampHub\":1607599458679,\"Body\":\"{\\r\\n  \\\"Code\\\": 200,\\r\\n  \\\"Description\\\": \\\"Message Received\\\",\\r\\n  \\\"OriginalMessage\\\": {\\r\\n    \\\"ConversationID\\\": \\\"13c618d8-c20f-4fc2-a93c-af2fead8ac6a\\\",\\r\\n    \\\"MessageType\\\": \\\"Command\\\",\\r\\n    \\\"MessageOrigin\\\": null,\\r\\n    \\\"From\\\": \\\"admin\\\",\\r\\n    \\\"CommandInvokerGuid\\\": \\\"0841ce8b-f263-435c-b455-f66fd865070e\\\",\\r\\n    \\\"To\\\": \\\"WKBXXB0054\\\",\\r\\n    \\\"TimestampOrigin\\\": 1607599458675,\\r\\n    \\\"TimestampHub\\\": 1607599458675,\\r\\n    \\\"Body\\\": \\\"{\\\\\\\"CommandType\\\\\\\":\\\\\\\"InCarStatus\\\\\\\",\\\\\\\"CommandID\\\\\\\":10501,\\\\\\\"Params\\\\\\\":{\\\\\\\"Duration\\\\\\\":60}}\\\",\\r\\n    \\\"Data\\\": null\\r\\n  }\\r\\n}\",\"Data\":null
-}"""
-iot_reply_2 = """{\"ConversationID\":\"f5dd122b-83b0-4a0f-b18a-eb8bafa8ccb5\",\"MessageType\":\"Success\",\"MessageOrigin\":null,\"From\":\"WKBXXB0054\",\"CommandInvokerGuid\":\"7349a511-51e5-4b82-bf36-8900192b788f\",\"To\":\"admin\",\"TimestampOrigin\":1607601281779,\"TimestampHub\":1607601281780,\"Body\":\"{\\\"success\\\": true,\\\"Result\\\": \\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"Data\\\\\\\":{\\\\\\\"status\\\\\\\":\\\\\\\"StreamingOff\\\\\\\",\\\\\\\"commandInvoker\\\\\\\":\\\\\\\"\\\\\\\"}}\\\",\\\"CommandType\\\": \\\"InCarStatus\\\",\\\"CommandID\\\": 10501,\\\"Description\\\": \\\"Operation succeeded.\\\"}\",\"Data\":null}"""
 
 
 def on_message(client, userdata, msg):
@@ -56,6 +56,21 @@ def ping_msg_cb(client, userdata, msg):
 
 def outgoing_msg_cb(client, userdata, msg):
     print(f"\nReceived COMMAND on {msg.topic} : {msg.payload.decode()}")
+    # print("This is the type message coming from evm",
+    #       type(msg.payload.decode()))
+    payload_string1 = json.loads(msg.payload.decode())
+    # payload_string2 = eval(msg.payload.decode())
+    conversation_id = payload_string1["ConversationID"]
+    print(conversation_id)
+    iot_reply_1 = f"""{{\"ConversationID\":\"{conversation_id}\",\"MessageType\":\"Ack\",\"MessageOrigin\":null,\"From\":\"WKBXXB0054\",\"CommandInvokerGuid\":null,\"To\":\"admin\",\"TimestampOrigin\":1607599458679,\"TimestampHub\":1607599458679,\"Body\":\"{{\\r\\n  \\\"Code\\\": 200,\\r\\n  \\\"Description\\\": \\\"Message Received\\\",\\r\\n  \\\"OriginalMessage\\\": {{\\r\\n    \\\"ConversationID\\\": \\\"13c618d8-c20f-4fc2-a93c-af2fead8ac6a\\\",\\r\\n    \\\"MessageType\\\": \\\"Command\\\",\\r\\n    \\\"MessageOrigin\\\": null,\\r\\n    \\\"From\\\": \\\"admin\\\",\\r\\n    \\\"CommandInvokerGuid\\\": \\\"0841ce8b-f263-435c-b455-f66fd865070e\\\",\\r\\n    \\\"To\\\": \\\"WKBXXB0054\\\",\\r\\n    \\\"TimestampOrigin\\\": 1607599458675,\\r\\n    \\\"TimestampHub\\\": 1607599458675,\\r\\n    \\\"Body\\\": \\\"{{\\\\\\\"CommandType\\\\\\\":\\\\\\\"InCarStatus\\\\\\\",\\\\\\\"CommandID\\\\\\\":10501,\\\\\\\"Params\\\\\\\":{{\\\\\\\"Duration\\\\\\\":60}}\\\",\\r\\n    \\\"Data\\\": null\\r\\n  }}\\r\\n}}\",\"Data\":null}}"""
+    iot_reply_2 = f"""{{\"ConversationID\":\"{conversation_id}\",\"MessageType\":\"Success\",\"MessageOrigin\":null,\"From\":\"WKBXXB0054\",\"CommandInvokerGuid\":\"7349a511-51e5-4b82-bf36-8900192b788f\",\"To\":\"admin\",\"TimestampOrigin\":1607601281779,\"TimestampHub\":1607601281780,\"Body\":\"{{\\\"success\\\": true,\\\"Result\\\": \\\"{{\\\\\\\"success\\\\\\\":true,\\\\\\\"Data\\\\\\\":{{\\\\\\\"status\\\\\\\":\\\\\\\"StreamingOff\\\\\\\",\\\\\\\"commandInvoker\\\\\\\":\\\\\\\"\\\\\\\"}}}}\\\",\\\"CommandType\\\": \\\"InCarStatus\\\",\\\"CommandID\\\": 10501,\\\"Description\\\": \\\"Operation succeeded.\\\"}}\",\"Data\":null}}"""
+    # print("\nThis is the reply going to evm", iot_reply_1)
+
+    # print(f"{payload_string1}\n")
+
+    # print(payload_string1["ConversationID"])
+    # print(payload_string2["ConversationID"])
+
     print(f"Acknowledging on {topic_iot}")
 
     client.publish(topic_iot, iot_reply_1)
@@ -80,9 +95,10 @@ client.on_message = on_message
 
 client.connect(host, port)
 
-client.loop_start()
+# client.loop_start()
 
-time.sleep(200)
+# time.sleep(200)
 
-client.disconnect_from_evm()
-client.loop_stop()
+# disconnect_from_evm(client)
+# client.loop_stop()
+client.loop_forever()
