@@ -29,6 +29,7 @@ from asyncio.tasks import sleep
 #     loop.run_until_complete(main())
 #     loop.close()
 
+
 async def f():
     await asyncio.sleep(1)
     return 123
@@ -37,6 +38,7 @@ async def f():
 async def main():
     result = await f()
     return result
+
 
 if __name__ == "__main__":
     result = asyncio.run(main())
