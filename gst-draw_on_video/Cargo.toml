@@ -1,7 +1,7 @@
 [package]
-name = "overlaycomp"
+name = "gst-draw_on_video"
 version = "0.1.0"
-authors = ["Muhammad Hassan <hassanmuhammad221@gmail.com>"]
+authors = ["Muhammad Hassan <muhammad.hassan@hyperdatacomputing.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
