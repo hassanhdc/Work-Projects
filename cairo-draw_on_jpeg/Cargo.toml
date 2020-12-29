@@ -1,19 +1,11 @@
 [package]
-name = "io"
+name = "cairo-draw_on_jpeg"
 version = "0.1.0"
-authors = ["hassa"]
+authors = ["Muhammad Hassan <hassanmuhammad221@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gstreamer = "*"
-glib = "*"
-
-[[bin]]
-name = "other"
-path = "src/other_sol.rs"
-
-[[bin]]
-name = "main"
-path = "src/main.rs"
+png = "*"
+cairo-rs = { version = "*", features = ["png"]}

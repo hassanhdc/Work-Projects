@@ -47,6 +47,7 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
     gst::init()?;
 
     let pipeline = gst::Pipeline::new(None);
+
     let src = gst::ElementFactory::make("videotestsrc", None)
         .map_err(|_| MissingElement("videotestsrc"))?;
     let overlay = gst::ElementFactory::make("cairooverlay", None)
@@ -98,10 +99,9 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let surface = cairo::ImageSurface::create(cairo::Format::Rgb30, 20, 20).unwrap();
             ctx.set_source_surface(&surface, 0., 0.);
 
+            let timestamp_str = format!("{:.11}", timestamp.to_string());
             ctx.set_source_rgba(1.0, 1.0, 0.0, 1.);
             ctx.move_to(1800., 970.);
-
-            let timestamp_str = format!("{:.11}", timestamp.to_string());
             layout.set_text(&timestamp_str);
             pangocairo::functions::show_layout(&ctx, &**layout);
 
@@ -111,8 +111,12 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             layout.set_text(msg);
             pangocairo::functions::show_layout(&ctx, &**layout);
 
-            ctx.set_source_rgba(1.0, 1.0, 1.0, 1.);
+            ctx.set_source_rgba(1.0, 1.0, 1.0, 0.6);
+            ctx.rectangle(670., 0., 300., 100.);
+            ctx.fill();
+
             ctx.move_to(670., 0.);
+            ctx.set_source_rgba(0.2, 0.5, 0.3, 1.);
             let msg = "Baz Qux";
             layout.set_text(msg);
             pangocairo::functions::show_layout(&ctx, &**layout);

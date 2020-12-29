@@ -75,7 +75,7 @@ fn example_main() {
             ctx.set_font_size(20.);
             ctx.move_to(1730., 990.);
 
-            // TODO : use overlay args to simulate if overlays can be shown with cmd line argument
+            // TODO : use overlay args to emulate if overlays can be shown with cmd line argument
             let mut overlay_args = vec![
                 (0, 4, false, "FOO"),
                 (4, 6, false, "BAR"),

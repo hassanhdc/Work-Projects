@@ -25,7 +25,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
-name = "cairo"
+name = "cairo-draw_on_jpeg"
 version = "0.1.0"
 dependencies = [
  "cairo-rs",
