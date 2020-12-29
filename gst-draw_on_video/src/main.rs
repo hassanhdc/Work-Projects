@@ -1,12 +1,15 @@
+extern crate vid_overlay;
+
 use gst::prelude::*;
 
 use pango::prelude::*;
-
 use std::ops;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Error;
 use derive_more::{Display, Error};
+
+use vid_overlay::VideoContext;
 
 #[derive(Debug, Display, Error)]
 #[display(fmt = "Missing element {}", _0)]
@@ -44,165 +47,98 @@ unsafe impl glib::SendUnique for LayoutWrapper {
 }
 
 fn create_pipeline() -> Result<gst::Pipeline, Error> {
-    gst::init()?;
+    // gst::init()?;
 
-    let pipeline = gst::Pipeline::new(None);
-    let src = gst::ElementFactory::make("videotestsrc", None)
-        .map_err(|_| MissingElement("videotestsrc"))?;
-    let overlay = gst::ElementFactory::make("overlaycomposition", None)
-        .map_err(|_| MissingElement("overlaycomposition"))?;
-    let capsfilter =
-        gst::ElementFactory::make("capsfilter", None).map_err(|_| MissingElement("capsfilter"))?;
-    let videoconvert = gst::ElementFactory::make("videoconvert", None)
-        .map_err(|_| MissingElement("videoconvert"))?;
-    let sink = gst::ElementFactory::make("autovideosink", None)
-        .map_err(|_| MissingElement("autovideosink"))?;
+    // // create pipeline
+    // let pipeline = gst::Pipeline::new(None);
 
-    pipeline.add_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
-    gst::Element::link_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
+    // // initiate elements
+    // let src = gst::ElementFactory::make("videotestsrc", None)
+    //     .map_err(|_| MissingElement("videotestsrc"))?;
+    // let overlay = gst::ElementFactory::make("cairooverlay", None)
+    //     .map_err(|_| MissingElement("cairooverlay"))?;
+    // let capsfilter =
+    //     gst::ElementFactory::make("capsfilter", None).map_err(|_| MissingElement("capsfilter"))?;
+    // let videoconvert = gst::ElementFactory::make("videoconvert", None)
+    //     .map_err(|_| MissingElement("videoconvert"))?;
+    // let sink = gst::ElementFactory::make("autovideosink", None)
+    //     .map_err(|_| MissingElement("autovideosink"))?;
 
-    let caps = gst::Caps::builder("video/x-raw")
-        .field("width", &800i32)
-        .field("height", &800i32)
-        .field("framerate", &gst::Fraction::new(15, 1))
-        .build();
-    capsfilter.set_property("caps", &caps).unwrap();
+    // // link elements in the pipeline
+    // pipeline.add_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
+    // gst::Element::link_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
 
-    src.set_property_from_str("pattern", "white");
+    // // set input video format and pattern
+    // let caps = gst::Caps::builder("video/x-raw")
+    //     .field("width", &1920i32)
+    //     .field("height", &1080i32)
+    //     .field("framerate", &gst::Fraction::new(30, 1))
+    //     .build();
+    // capsfilter.set_property("caps", &caps).unwrap();
+    // src.set_property_from_str("pattern", "smpte");
 
+    let pipeline = VideoContext::new(1920i32, 1080i32, 30i32).unwrap();
+    let overlay = pipeline.get_by_name("overlay").unwrap();
+
+    // initiate cairo draw element
     let fontmap = pangocairo::FontMap::new().unwrap();
-
     let context = fontmap.create_context().unwrap();
-
     let layout = LayoutWrapper(pango::Layout::new(&context));
-    let layout2 = LayoutWrapper(pango::Layout::new(&context));
-    let font_desc = pango::FontDescription::from_string("Sans Bold 26");
+    let font_desc = pango::FontDescription::from_string("Sans Bold 12");
     layout.set_font_description(Some(&font_desc));
-    layout2.set_font_description(Some(&font_desc));
-    layout.set_text("World");
-    layout2.set_text("Hello");
 
+    // wrapper around cairo element so it can be sent across threads
     let drawer = Arc::new(Mutex::new(DrawingContext {
         layout: glib::SendUniqueCell::new(layout).unwrap(),
         info: None,
     }));
 
-    let drawer2 = Arc::new(Mutex::new(DrawingContext {
-        layout: glib::SendUniqueCell::new(layout2).unwrap(),
-        info: None,
-    }));
-
+    // get a copy of the wrapper object so it can be moved into the callback
     let drawer_clone = drawer.clone();
-    let drawer2_clone = drawer2.clone();
 
+    // draw callback - is called on every frame received
     overlay
         .connect("draw", false, move |args| {
+            // lock on wrapper object from program thread
             let drawer = &drawer_clone;
-            let drawer2 = &drawer2_clone;
-
             let drawer = drawer.lock().unwrap();
-            let drawer2 = drawer2.lock().unwrap();
 
-            let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
-            let sample = args[1].get::<gst::Sample>().unwrap().unwrap();
-            let buffer = sample.get_buffer().unwrap();
-            let _timestamp = buffer.get_pts();
+            // get callback arguments
+            let timestamp = args[2].get_some::<gst::ClockTime>().unwrap();
+            let ctx = args[1].get::<cairo::Context>().unwrap().unwrap();
 
-            let info = drawer.info.as_ref().unwrap();
             let layout = drawer.layout.borrow();
-            let layout2 = drawer2.layout.borrow();
+            // create new surface to draw on
+            let surface = cairo::ImageSurface::create(cairo::Format::Rgb30, 20, 20).unwrap();
+            ctx.set_source_surface(&surface, 0., 0.);
 
-            let frame_width = info.width() as usize;
-            let frame_height = info.height() as usize;
-            let stride = 4 * frame_width;
-            let frame_size = stride * frame_height;
+            // format time as string to display on video frame
+            let timestamp_str = format!("{:.11}", timestamp.to_string());
+            ctx.set_source_rgba(1.0, 1.0, 0.0, 1.);
+            ctx.move_to(1800., 970.);
+            layout.set_text(&timestamp_str);
+            pangocairo::functions::show_layout(&ctx, &**layout);
 
-            let mut buffer = gst::Buffer::with_size(frame_size).unwrap();
+            // write "Foo Bar" on video frame
+            ctx.set_source_rgba(1.0, 0.5, 0.0, 1.);
+            ctx.move_to(0., 0.);
+            let msg = "Foo Bar";
+            layout.set_text(msg);
+            pangocairo::functions::show_layout(&ctx, &**layout);
 
-            gst_video::VideoMeta::add(
-                buffer.get_mut().unwrap(),
-                gst_video::VideoFrameFlags::empty(),
-                gst_video::VideoFormat::Bgra,
-                frame_width as u32,
-                frame_height as u32,
-            )
-            .unwrap();
+            // draw a rectangle on the video frame
+            ctx.set_source_rgba(1.0, 1.0, 1.0, 0.6);
+            ctx.rectangle(670., 0., 300., 100.);
+            ctx.fill();
 
-            let buffer = buffer.into_mapped_buffer_writable().unwrap();
-            let buffer = {
-                let buffer_ptr = unsafe { buffer.get_buffer().as_ptr() };
-                let surface = cairo::ImageSurface::create_for_data(
-                    buffer,
-                    cairo::Format::ARgb32,
-                    frame_width as i32,
-                    frame_height as i32,
-                    stride as i32,
-                )
-                .unwrap();
+            // write "Baz Qux" on the video frame
+            ctx.move_to(670., 0.);
+            ctx.set_source_rgba(0.2, 0.5, 0.3, 1.);
+            let msg = "Baz Qux";
+            layout.set_text(msg);
+            pangocairo::functions::show_layout(&ctx, &**layout);
 
-                let cr = cairo::Context::new(&surface);
-                let cr2 = cairo::Context::new(&surface);
-
-                // cr.save();
-                // cr.set_operator(cairo::Operator::Clear);
-                // cr.paint();
-                // cr.restore();
-
-                // cr2.save();
-                // cr2.set_operator(cairo::Operator::Clear);
-                // cr2.paint();
-                // cr2.restore();
-
-                cr.translate(
-                    f64::from(info.width()) / 2.0,
-                    f64::from(info.height()) / 2.0,
-                );
-                cr2.translate(
-                    f64::from(info.width()) / 2.0,
-                    f64::from(info.height()) / 2.5,
-                );
-
-                pangocairo::functions::show_layout(&cr, &**layout);
-                layout.set_text(&_timestamp.to_string());
-                pangocairo::functions::show_layout(&cr2, &**layout2);
-
-                drop(cr);
-                drop(cr2);
-
-                unsafe {
-                    assert_eq!(
-                        cairo_sys::cairo_surface_get_reference_count(surface.to_raw_none()),
-                        1
-                    );
-                    let buffer = glib::translate::from_glib_none(buffer_ptr);
-                    drop(surface);
-                    buffer
-                }
-            };
-
-            let rect = gst_video::VideoOverlayRectangle::new_raw(
-                &buffer,
-                0,
-                0,
-                frame_width as u32,
-                frame_height as u32,
-                gst_video::VideoOverlayFormatFlags::PREMULTIPLIED_ALPHA,
-            );
-
-            let rect2 = gst_video::VideoOverlayRectangle::new_raw(
-                &buffer,
-                100,
-                100,
-                frame_width as u32,
-                frame_height as u32,
-                gst_video::VideoOverlayFormatFlags::PREMULTIPLIED_ALPHA,
-            );
-
-            Some(
-                gst_video::VideoOverlayComposition::new(&[rect])
-                    .unwrap()
-                    .to_value(),
-            )
+            None
         })
         .unwrap();
 
@@ -211,8 +147,8 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
             let _overlay = args[0].get::<gst::Element>().unwrap().unwrap();
             let caps = args[1].get::<gst::Caps>().unwrap().unwrap();
 
-            let mut drawer = drawer.lock().unwrap();
-            drawer.info = Some(gst_video::VideoInfo::from_caps(&caps).unwrap());
+            let mut drawer_time = drawer.lock().unwrap();
+            drawer_time.info = Some(gst_video::VideoInfo::from_caps(&caps).unwrap());
 
             None
         })

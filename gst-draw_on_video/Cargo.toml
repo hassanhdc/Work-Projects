@@ -1,5 +1,5 @@
 [package]
-name = "gst-draw_on_video"
+name = "vid_overlay"
 version = "0.1.0"
 authors = ["Muhammad Hassan <muhammad.hassan@hyperdatacomputing.com>"]
 edition = "2018"
@@ -37,5 +37,5 @@ name = "cairo"
 path = "src/cairo.rs"
 
 [[bin]]
-name = "drawlib"
-path = "src/draw_lib.rs"
+name = "main"
+path = "src/main.rs"
