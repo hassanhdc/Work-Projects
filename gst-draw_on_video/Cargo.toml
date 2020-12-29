@@ -35,3 +35,7 @@ path = "src/buf.rs"
 [[bin]]
 name = "cairo"
 path = "src/cairo.rs"
+
+[[bin]]
+name = "drawlib"
+path = "src/draw_lib.rs"

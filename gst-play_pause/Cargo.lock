@@ -150,6 +150,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gst_play-pause"
+version = "0.1.0"
+dependencies = [
+ "glib",
+ "gstreamer",
+]
+
+[[package]]
 name = "gstreamer"
 version = "0.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -192,14 +200,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
 dependencies = [
  "unicode-segmentation",
-]
-
-[[package]]
-name = "io"
-version = "0.1.0"
-dependencies = [
- "glib",
- "gstreamer",
 ]
 
 [[package]]
