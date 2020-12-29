@@ -46,8 +46,10 @@ unsafe impl glib::SendUnique for LayoutWrapper {
 fn create_pipeline() -> Result<gst::Pipeline, Error> {
     gst::init()?;
 
+    // create pipeline
     let pipeline = gst::Pipeline::new(None);
 
+    // initiate elements
     let src = gst::ElementFactory::make("videotestsrc", None)
         .map_err(|_| MissingElement("videotestsrc"))?;
     let overlay = gst::ElementFactory::make("cairooverlay", None)
@@ -59,62 +61,71 @@ fn create_pipeline() -> Result<gst::Pipeline, Error> {
     let sink = gst::ElementFactory::make("autovideosink", None)
         .map_err(|_| MissingElement("autovideosink"))?;
 
+    // link elements in the pipeline
     pipeline.add_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
     gst::Element::link_many(&[&src, &overlay, &capsfilter, &videoconvert, &sink])?;
 
+    // set input video format and pattern
     let caps = gst::Caps::builder("video/x-raw")
         .field("width", &1920i32)
         .field("height", &1080i32)
         .field("framerate", &gst::Fraction::new(30, 1))
         .build();
-
     capsfilter.set_property("caps", &caps).unwrap();
-
     src.set_property_from_str("pattern", "smpte");
 
+    // initiate cairo draw element
     let fontmap = pangocairo::FontMap::new().unwrap();
     let context = fontmap.create_context().unwrap();
     let layout = LayoutWrapper(pango::Layout::new(&context));
-
     let font_desc = pango::FontDescription::from_string("Sans Bold 12");
     layout.set_font_description(Some(&font_desc));
 
+    // wrapper around cairo element so it can be sent across threads
     let drawer = Arc::new(Mutex::new(DrawingContext {
         layout: glib::SendUniqueCell::new(layout).unwrap(),
         info: None,
     }));
 
+    // get a copy of the wrapper object so it can be moved into the callback
     let drawer_clone = drawer.clone();
 
+    // draw callback - is called on every frame received
     overlay
         .connect("draw", false, move |args| {
+            // lock on wrapper object from program thread
             let drawer = &drawer_clone;
             let drawer = drawer.lock().unwrap();
 
+            // get callback arguments
             let timestamp = args[2].get_some::<gst::ClockTime>().unwrap();
             let ctx = args[1].get::<cairo::Context>().unwrap().unwrap();
 
             let layout = drawer.layout.borrow();
-
+            // create new surface to draw on
             let surface = cairo::ImageSurface::create(cairo::Format::Rgb30, 20, 20).unwrap();
             ctx.set_source_surface(&surface, 0., 0.);
 
+            // format time as string to display on video frame
             let timestamp_str = format!("{:.11}", timestamp.to_string());
             ctx.set_source_rgba(1.0, 1.0, 0.0, 1.);
             ctx.move_to(1800., 970.);
             layout.set_text(&timestamp_str);
             pangocairo::functions::show_layout(&ctx, &**layout);
 
+            // write "Foo Bar" on video frame
             ctx.set_source_rgba(1.0, 0.5, 0.0, 1.);
             ctx.move_to(0., 0.);
             let msg = "Foo Bar";
             layout.set_text(msg);
             pangocairo::functions::show_layout(&ctx, &**layout);
 
+            // draw a rectangle on the video frame
             ctx.set_source_rgba(1.0, 1.0, 1.0, 0.6);
             ctx.rectangle(670., 0., 300., 100.);
             ctx.fill();
 
+            // write "Baz Qux" on the video frame
             ctx.move_to(670., 0.);
             ctx.set_source_rgba(0.2, 0.5, 0.3, 1.);
             let msg = "Baz Qux";
