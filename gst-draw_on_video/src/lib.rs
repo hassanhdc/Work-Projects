@@ -154,7 +154,7 @@ impl VideoContext {
             info: None,
         }));
 
-        let draw_args = Box::new(overlay_element);
+        // let draw_args = Box::new(overlay_element);
 
         // get a copy of the wrapper object so it can be moved into the callback
         let drawer_clone = drawer.clone();
@@ -168,7 +168,7 @@ impl VideoContext {
                 let layout = drawer.layout.borrow();
 
                 // create an empty string as a placeholder for render time comparison
-                let mut time_str = String::from("");
+                // let mut time_str = String::from("");
 
                 // create new surface to draw on
                 let surface = cairo::ImageSurface::create(cairo::Format::Rgb30, 20, 20).unwrap();
@@ -181,30 +181,10 @@ impl VideoContext {
                 layout.set_text(&timestamp_str);
                 pangocairo::functions::show_layout(&ctx, &**layout);
 
-                // for mut i in 0..draw_args.len() {
-                //     println!("{}", i);
-                //     match draw_args[i] {
-                //         OverlayElement::Rectangle(mut rect) => {
-                //             ctx.set_source_rgba(rect.rgba.0, rect.rgba.1, rect.rgba.2, rect.rgba.3);
-                //             ctx.rectangle(rect.x, rect.y, rect.width, rect.height);
-                //             if !rect.rendered {
-                //                 if timestamp < rect.present_time.1 * gst::SECOND {
-                //                     ctx.fill();
-                //                 // break 'outer;
-                //                 } else {
-                //                     rect.rendered = true;
-                //                 }
-                //             } else {
-                //                 // ctx.fill();
-                //                 continue;
-                //             }
-                //         }
-                //         OverlayElement::Text => (),
-                //     }
-                // }
+                let draw_args = overlay_element.clone();
 
-                for ele in draw_args.iter() {
-                    match ele.clone() {
+                for ele in draw_args.into_iter() {
+                    match ele {
                         OverlayElement::Rectangle(mut rect) => {
                             if !rect.rendered {
                                 if (timestamp < rect.present_time.1 * gst::SECOND)
