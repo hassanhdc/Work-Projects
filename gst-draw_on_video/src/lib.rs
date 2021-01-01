@@ -13,11 +13,11 @@ struct MissingElement(#[error(not(source))] &'static str);
 
 #[derive(Debug, Display, Error)]
 #[display(fmt = "Received error from {}: {} (debug: {:?})", src, error, debug)]
-struct ErrorMessage {
-    src: String,
-    error: String,
-    debug: Option<String>,
-    source: glib::Error,
+pub struct ErrorMessage {
+    pub src: String,
+    pub error: String,
+    pub debug: Option<String>,
+    pub source: glib::Error,
 }
 
 pub struct DrawingContext {

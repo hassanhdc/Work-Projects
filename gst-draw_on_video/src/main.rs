@@ -3,22 +3,8 @@ extern crate vid_overlay;
 use gst::prelude::*;
 
 use anyhow::Error;
-use derive_more::{Display, Error};
 
-use vid_overlay::{OverlayElement, VideoContext};
-
-#[derive(Debug, Display, Error)]
-#[display(fmt = "Missing element {}", _0)]
-struct MissingElement(#[error(not(source))] &'static str);
-
-#[derive(Debug, Display, Error)]
-#[display(fmt = "Received error from {}: {} (debug: {:?})", src, error, debug)]
-struct ErrorMessage {
-    src: String,
-    error: String,
-    debug: Option<String>,
-    source: glib::Error,
-}
+use vid_overlay::{ErrorMessage, OverlayElement, VideoContext};
 
 fn draw_elements() -> gst::Pipeline {
     let pipeline = VideoContext::new(1920i32, 1080i32, 30i32).unwrap();
